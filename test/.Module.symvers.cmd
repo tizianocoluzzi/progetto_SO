@@ -1,0 +1,1 @@
+savedcmd_/home/tiziano/Documents/SO/progetto/test/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/tiziano/Documents/SO/progetto/test/Module.symvers -T /home/tiziano/Documents/SO/progetto/test/modules.order -i Module.symvers -e 

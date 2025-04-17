@@ -1,1 +1,0 @@
-savedcmd_/home/tiziano/Documents/SO/progetto/test/test.mod := printf '%s\n'   test.o | awk '!x[$$0]++ { print("/home/tiziano/Documents/SO/progetto/test/"$$0) }' > /home/tiziano/Documents/SO/progetto/test/test.mod

@@ -1,3 +1,6 @@
+
+.phony: clean all
+
 obj-m += test.o
 
 all:

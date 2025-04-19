@@ -50,3 +50,14 @@ Ho chiaramente dovuto anche fare un mini script di arduino che inviasse il carat
 
 #### prossimi obiettivi
 indeciso se iniziare effettivamente il progetto oppure fare un test con un kernel object in lettura (creazione quindi del devchar e le fopts) 
+
+### 19.04.2025
+
+#### descrizione 
+prima di iniziare lo studio presento il problema: non credo si possa fare la mmap sul `dev/ttyACM0`, device che comunque non esiste sempre quindi andrebbe sicuramente a creare errori nel server, possiamo percorre due strade: 
+- creaiamo il driver personalizzato USB, il che vuol dire utilizzare il protocollo USB
+- mettiamo il dispositivo arduino nella blacklist del driver dcd-acm standard e creiamo il nostro personale, probabilmente la strada piu semplicema prevede cose meno professionali
+- opzione brutta, potrebbe essere la prima da percorrere, creare un demon user-space che copita i dati della tty in un chardev che fa partire poi la simulazione dei tasti
+all fine oggi giornata di sole ricerche, il problema grosso di usare il protocollo USB sta nel fatto di dover riprogrammare la atmega16u2, il chip che fa da tramite tra l'arduino e il pc,
+si potrebbe fare in modo di leggerlo come un dispositivo HID, è un'operazione molto costosa
+

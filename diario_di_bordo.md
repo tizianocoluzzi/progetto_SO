@@ -61,3 +61,13 @@ prima di iniziare lo studio presento il problema: non credo si possa fare la mma
 all fine oggi giornata di sole ricerche, il problema grosso di usare il protocollo USB sta nel fatto di dover riprogrammare la atmega16u2, il chip che fa da tramite tra l'arduino e il pc,
 si potrebbe fare in modo di leggerlo come un dispositivo HID, è un'operazione molto costosa
 
+#### decrizione pt. 2
+in realtà ho iniziato lo sviluppo del progetto nella modalita col demone in userspace, al momento ho iniziato a creare un chardev, ho scopertu successivamente che è un metodo obsoleto
+quello che ho ustilizzato adesso, cioe la funzione `register_chardev` perchè prevede che si debba poi allocate il dispositivo in `/dev` manualmente con `insnode`, 
+questo può essere risolto con `alloc_chardev_area` (tipo, non ricordo bene), ho creato anche la funzione di read che reagisce a quando si scrive qualcosa sul device con il suo major
+
+#### obiettivi futuri
+- finire di scrivere la funzione read, cioe quella che invia la pressione del tasto
+- scrivere tutto in maniera sensata e corretta e ordinata
+- scrivere il codice di arduino
+

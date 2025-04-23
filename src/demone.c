@@ -6,11 +6,11 @@
 #include <unistd.h> 
 #include <termios.h>
 
-#define PATH "/dev/ttyACM0" 
-
+#define SERIAL_PATH "/dev/ttyACM0" 
+#define DEVICE_PATH "" //da aggiungere
 int main(){
     //N.B. per aprire il file ho dovuto dare i permessi al device /dev/ttyACM0 il che potrebbe essere un problema per la scalabilità
-    int fd = open(PATH, O_RDONLY | O_NOCTTY);
+    int fd = open(SERIAL_PATH, O_RDONLY | O_NOCTTY);
     // struttura per la gestione delle opzioni del file
     struct termios opts;
 

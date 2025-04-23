@@ -7,8 +7,8 @@
 
 static ssize_t device_read(struct file * file, const char __user * buffer, size_t len, loff_t * offset); //taccia il compilatore
 
-static struct input_dev* dev;
-static struct file_operations fops = {.write = device_read };
+static struct input_dev* dev; // device simulazione pressione dei tasti
+static struct file_operations fops = {.write = device_read }; // per le operazioni sul file
 
 static ssize_t device_read(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
     char kbuf[100]; //allochiamo memoria come se non ci fosse un domani
@@ -16,6 +16,7 @@ static ssize_t device_read(struct file * file, const char __user * buffer, size_
     if(ret < 0) return -EFAULT;
     kbuf[1] = '\0';
     printk("ho letto: %s\n", kbuf);
+    // TODO pressione dei tatsi con switch case
     return 1; 
 }
 
@@ -58,6 +59,7 @@ static int my_init(void)
 
 static void my_exit(void)
 {
+    // lo lascio al momento come verifica
     input_report_key(dev, KEY_A, 1);
     input_sync(dev);
     input_report_key(dev, KEY_A, 0);

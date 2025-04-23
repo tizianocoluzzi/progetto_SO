@@ -5,11 +5,11 @@
 #include <unistd.h> 
 #include <termios.h>
 
-#define PATH "/dev/ttyACM0" 
-
+#define ARDUINO_PATH "/dev/ttyACM0" 
+#define DEVICE_PATH ""
 int main(){
     //N.B. per aprire il file ho dovuto dare i permessi al device /dev/ttyACM0 il che potrebbe essere un problema per la scalabilità
-    int fd = open(PATH, O_RDONLY | O_NOCTTY);
+    int fd = open(ARDUINO_PATH, O_RDONLY | O_NOCTTY);
     // struttura per la gestione delle opzioni del file
     struct termios opts;
 
@@ -19,7 +19,7 @@ int main(){
     }
     
     opts.c_cflag = B19200 | CS8 | CLOCAL | CREAD; // baudrate, bit per messaggio, le altre boh
-    // le setto a zero per vedere poi che fanno
+    //falg diverse dal baudrate
     opts.c_iflag = 0;
     opts.c_oflag = 0;
     opts.c_lflag = 0;
@@ -37,6 +37,7 @@ int main(){
             return -1;
         }
         if (ret == 0) continue;
+        //TODO scrittura sul device
         printf("line: %s\n", buf);
     }
     return 0;

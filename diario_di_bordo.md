@@ -71,3 +71,11 @@ questo può essere risolto con `alloc_chardev_area` (tipo, non ricordo bene), ho
 - scrivere tutto in maniera sensata e corretta e ordinata
 - scrivere il codice di arduino
 
+### 28.04.2025
+ho riscritto la creazione del chardev utilizzando le funzioni di allocazione, in questo modo /dev/tiziano_chardev0 si crea in automatico, ancora da controllare bene come funzione la free
+di questi dispositivi
+
+#### obiettivi futuri
+- gli stessi dell'altra volta
+- correggere bene la free del dispositivo
+

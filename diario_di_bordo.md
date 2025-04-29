@@ -79,3 +79,54 @@ di questi dispositivi
 - gli stessi dell'altra volta
 - correggere bene la free del dispositivo
 
+#### 29.04.2025
+corretta la funzione di exit, semplicemente avevo commentato la creazione del device di simulazione dei tasti e andandolo ad eliminare dava problemi, 
+ho scritto la struttura della funzione parser che ha lo scopo di tradurre una stringa in una pressione di tasti seguendo determinate regole, in modo che possa essere piu modulare
+il problema sta nell'associare un tasto a una simulazione di pressione, nel driver atakbd usa un semplice array che mappa un numero a un determinato KEY_<qualcosa>, 
+potrebbe essere una buona soluzione per evitare di impazzire
+aggiunto il vettore key, con indice dei caratteri, sembra funzionare, ho eseguito diversi test:
+```
+$ echo "a" > /dev/tiziano_chardev0
+--- 
+$ echo "b" > /dev/tiziano_chardev0
+---
+$ echo "e" > /dev/tiziano_chardev0
+---
+$ echo "E" > /dev/tiziano_chardev0
+```
+ai quali sono seguite le seguenti riposte dalle printk 
+```
+[ 4418.659421] ho letto: a
+                che corrisponde al valore 30
+[ 4418.659429] ho letto: 
+               
+                che corrisponde al valore 0
+[ 4429.383546] ho letto: b
+                che corrisponde al valore 48
+[ 4429.383550] ho letto: 
+               
+                che corrisponde al valore 0
+[ 4459.409220] ho letto: a
+                che corrisponde al valore 30
+[ 4459.409234] ho letto: 
+               
+                che corrisponde al valore 0
+[ 4468.032280] ho letto: e
+                che corrisponde al valore 18
+[ 4468.032291] ho letto: 
+               
+                che corrisponde al valore 0
+[ 4475.003979] ho letto: E
+                che corrisponde al valore 28
+[ 4475.003984] ho letto: 
+               
+                che corrisponde al valore 0
+``` 
+si evidenzia un problema perche legge anche un carattere vuoto dopo, ma si risolverà, potrebbe essere semplicemente legato all'uso delle doppie virgolette
+anche aggiungendo l'effettiva simulazione del tasto si riscontra che simula la pressione del tasto corretta, in questo modo abbiamo praticamente un dizionario con accesso in O(1)
+ho messo anche una conversione da stringa letta a int in base 16 ma a quanto pare non va, non capisco bene perche
+
+#### obiettivi futuri
+- finire il parser
+- quelli precedenti
+(si accumulano)

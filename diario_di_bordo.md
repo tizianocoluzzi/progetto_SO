@@ -137,6 +137,12 @@ il parser ha alcuni problemi e imprecisioni ma alla fine va bene perche potrei r
 ho creato uno script .sh per compilare,
 inserire il kernel module e dare i permessi al device
 ho anche aggiornato la divisione in cartelle della src
+##### aggiornamento delle 0:05
+ho fatto anche la parte della tastiera e il demone che fa da tramite, il codice della tastiera è quasi interamente copiato il codice del professore, 
+ho modificato l'invio del segnale solo alla pressione del tasto invece che anche al rilascio, il demone è molto base si tratta di leggere e scrivere in modo molto banale,
+a livello fisico ho realizzato la tastiera con soli 8 tasti perche lo spazio sulle breadboard è quello che è, prima o poi la realizzerò interamente
+
 #### obiettivi futuri
-- iniziare a lavorare sul demone 
-- la parte di arduino
+- controllare tutto e fare tutti i test necessari
+- scrivere lo schema della tastiera e documentare tutto
+- provare a trovare la soluzione unica senza demone

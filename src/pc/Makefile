@@ -1,5 +1,5 @@
 CC = gcc
-flags = -Wall -g std=c99 
+flags = -Wall -g -std=c99 
 
 demone:
 	$(CC) $(flags) -o demone demone.c

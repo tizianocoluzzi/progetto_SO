@@ -130,3 +130,13 @@ ho messo anche una conversione da stringa letta a int in base 16 ma a quanto par
 - finire il parser
 - quelli precedenti
 (si accumulano)
+
+### 02.05.2025
+giornatina produttiva, finita la parte di codice del chardev, almeno per questa prima versione, finito il parser, corretta la conversione degli indici (non serviva a nulla la kstrol), 
+il parser ha alcuni problemi e imprecisioni ma alla fine va bene perche potrei renderlo piu complesso, devo solo trovare un modo sensato per farlo, 
+ho creato uno script .sh per compilare,
+inserire il kernel module e dare i permessi al device
+ho anche aggiornato la divisione in cartelle della src
+#### obiettivi futuri
+- iniziare a lavorare sul demone 
+- la parte di arduino

@@ -6,6 +6,9 @@
 #include <linux/fs.h> // per le file oparations
 #include <linux/device.h> //per la crezione automatica dei device
 #include <linux/cdev.h> //same
+ 
+//massimo carattere che il dispositivo puo inviare
+#define MAX_MACRO_NUMBER 16
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset); //taccia il compilatore
 
@@ -17,8 +20,9 @@ static struct cdev cdev;
 static dev_t d;
 static int major;
 
-/*idea per il parsing delle combinazioni di tasti 
+/*parsing delle combinazioni di tasti 
 <qualunque cosa contenuta qui dentro è una pressione unica>
+non possono esserci cose nested (rende inutile il fatto di avere le parestesi angolate ma magari nel tempo migliorerà)
 */
 
 // in questo modo possiamo accedere facilmente al tasto che andiamo a leggere
@@ -49,71 +53,140 @@ static unsigned char key[255] = {
     ['x'] = KEY_X,
     ['y'] = KEY_Y,
     ['z'] = KEY_Z,
-    ['E'] = KEY_ENTER,
-    ['C'] = KEY_LEFTCTRL,
-    ['A'] = KEY_LEFTALT
-    //... da aggiungere gli altri map
 
+    ['1'] = KEY_1,
+    ['2'] = KEY_2,
+    ['3'] = KEY_3,
+    ['4'] = KEY_4,
+    ['5'] = KEY_5,
+    ['6'] = KEY_6,
+    ['7'] = KEY_7,
+    ['8'] = KEY_8,
+    ['9'] = KEY_9,
+    ['0'] = KEY_0,
+
+    [' ']  = KEY_SPACE,
+    ['\t'] = KEY_TAB,
+    [27]   = KEY_ESC,      // ESC in ASCII è 27
+    ['-']  = KEY_MINUS,
+    ['=']  = KEY_EQUAL,
+    ['[']  = KEY_LEFTBRACE,
+    [']']  = KEY_RIGHTBRACE,
+    [';']  = KEY_SEMICOLON,
+    ['\''] = KEY_APOSTROPHE,
+    ['`']  = KEY_GRAVE,
+    ['\\'] = KEY_BACKSLASH,
+    [',']  = KEY_COMMA,
+    ['.']  = KEY_DOT,
+    ['/']  = KEY_SLASH,
+    ['A']  = KEY_RIGHTALT,
+    ['C']  = KEY_RIGHTCTRL,
+    ['E']  = KEY_ENTER, // non lo mappo con \n
+    ['S']  = KEY_RIGHTSHIFT
+    //ce ne sono molti di piu ma al momento ce li facciamo andare bene
 };
+
 
 //esempio di possibile mappatura
 //ad un tasto premuto sull'arduino corrispone una combinazioni di tasti, definita in questo array
-static unsigned char* map[16] = {
-    "<abc>","<Cs>", "Abcd", "", "", "", "","","","","","","","","",""
+static unsigned char* map[MAX_MACRO_NUMBER] = {
+    "<abc>","<Cs>", "<Cc>", "<Cv>", "<CSc>", "<CSv>", "<abc>a<abv>","","","","","","","","",""
 };
 
+inline void premi_tasto(const char tasto){
+    input_report_key(dev, key[tasto], 1);
+    input_sync(dev);
+}
+
+inline void rilascia_tasto(const char tasto){
+    input_report_key(dev, key[tasto], 0);
+    input_sync(dev);
+}
+
+static int check_formato(const char* buf){
+/* controllo del formato delle stringhe da parsare
+    in questo modo controllo che sia tutto <..><..>..
+    */
+    int stato = 0;
+    while(*buf != 0){
+        if(*buf == '<'){
+            stato++;
+        }
+        else if(*buf == '>'){
+            stato--;
+        }
+        if(stato < 0 || stato > 1){
+            return -1;
+        }
+        buf++;
+    }
+    return 0;
+}
+
 static void parser(const char* buf){
-    u_int8_t stato = 0; //se è 0 siamo in attesa, se 1 siamo in rilascio
+    /*fa traduce la stringa chiamata dal device negli input da tastiera*/
+    int err = check_formato(buf);
+    if(err){
+        printk("errore di formato");
+        return;
+    }
+    u_int8_t stato = 0; //se è 0 siamo in attesa di trovvare una stringa in <>, se 1 siamo nel ciclo di pressione e rilascio
+    int idx = 0;
     while(*buf != '\0'){
         if(*buf == '<'){
-            if(stato == 1 ) { //c'è un errore 
-            }
-            buf++;
             stato = 1; //segnala che lo stato è in pressione
         }
         else if(*buf == '>' && stato == 1){
+            while(*(--buf) != '<'){
+                //rilascio di *buf
+                rilascia_tasto(*buf);
+                idx += 1;
+            }
             //routine di rilascio, svuotare una eventuale linked listo o un array
             //solo nel caso era stato gia incontrato qualcosa
+            buf += idx; //torno allo stato precendente
+            idx = 0;
             stato = 0;
         }
         else if(stato == 1){
-            //switch case per la mappatuda dei dati, forse potrei creare un dizionario per l'efficenza
-            //esempio, le lettere minuscole corrispondono tutte a KEY_<lettera>, C corrisponde a control, A corrisponde ad alt, T corrisponde a tab, E corrisponde a enter ...
-            //è uno switch case bello lungo in realtà
+            //simulazione pressione usando dizionario key
+            premi_tasto(*buf);
         }
         else{
+            printk("funzione parser: attenzione ai caratteri esterni ");
+            //in questo modo mandiamo avanti comunque la funzione, altrimenti avremmo un caso in cui si crea un loop
             //siamo in uno stato non corretto
         }
-
+        buf++;
     }
 }
 
-static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
-    char kbuf[100]; //allochiamo memoria come se non ci fosse un domani
-    int ret = copy_from_user(kbuf+1, buffer, 1);
-    if(ret < 0) return -EFAULT;
-    //per la formattazione della stringa per strtol  
-    kbuf[0] = '+';
-    kbuf[2] = '\n';
-    kbuf[3] = '\0';
-    //test per key in realta questa cosa non deve essere effettuata qui ma in parser, quello che leggon dal dev è l'indice dell'array map
-    unsigned char pressed = key[kbuf[0]];
-    long res;
-    ret = kstrtol(kbuf, 16, &res);
-    if(ret == 0){
-        printk("il valore letto è: %d\n", ret);
-    }
-    else if (ret == -EINVAL){
-        printk("conversione fallita per errore di conversione\n");
-    }
-    /*input_report_key(dev, key[kbuf[0]], 1);
-    input_sync(dev);
-    input_report_key(dev, key[kbuf[0]], 0);
-    input_sync(dev);*/
+inline int char_to_index(char c){
+    /*funzione converte un carattere in un index valido per l'array map*/
+    printk("converto il carattere %c che in intero è %d allora ho %d", c, c, c-97);
+    return ((c - 97) < 0 || (c-97) > MAX_MACRO_NUMBER) ? -1 : (c - 97); // mi sembra che la a parta da 97 nel kernel
+}
 
-    printk("ho letto: %s\n che corrisponde al valore %u", kbuf, pressed);
-    // TODO modo di mappare ogni possibile lettera con una combinazione di tasti
-    // TODO chiamata alla funzione parser che invia la pressione
+static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
+    /*funzione di scrittura per le fops*/
+    char kchar; //allochiamo memoria come se non ci fosse un domani
+    
+    int ret = copy_from_user(&kchar, buffer, 1);
+    if(ret < 0) return -EFAULT;
+
+
+    //test per key in realta questa cosa non deve essere effettuata qui ma in parser, quello che leggon dal dev è l'indice dell'array map
+    ret = char_to_index(kchar);
+    if(ret < 0){
+        printk("errore nella conversione o indice non valido, ritornato: %d ", ret);
+        //ritorno -1 perche non so bene gli error code delle .write
+        return 1;
+    }
+    
+    //printk("vado a leggere nella cella %d di map: %s", ret, map[ret]);
+    //pressione dei tasti
+    parser(map[ret]);
+    // printk("ho letto: %s\n che corrisponde al valore %u", kbuf, pressed);
     return 1; 
 }
 
@@ -185,12 +258,6 @@ static int my_init(void)
 
 static void my_exit(void)
 {
-    // lo lascio al momento come verifica
-    /*input_report_key(dev, KEY_A, 1);
-    input_sync(dev);
-    input_report_key(dev, KEY_A, 0);
-    input_sync(dev);*/
-	
     device_destroy(chardev_class, MKDEV(major, 0));
     printk("device distrutta\n");
     //class_unregister(chardev_class);

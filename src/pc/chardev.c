@@ -164,7 +164,7 @@ static void parser(const char* buf){
 inline int char_to_index(char c){
     /*funzione converte un carattere in un index valido per l'array map*/
     printk("converto il carattere %c che in intero è %d allora ho %d", c, c, c-97);
-    return ((c - 97) < 0 || (c-97) > MAX_MACRO_NUMBER) ? -1 : (c - 97); // mi sembra che la a parta da 97 nel kernel
+    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; // mi sembra che la a parta da 97 nel kernel
 }
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){

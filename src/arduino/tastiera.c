@@ -89,7 +89,8 @@ int main(void){
     uint8_t num_events=keyScan(events);
     for (uint8_t k=0; k<num_events; ++k){
       KeyEvent e=events[k];
-      printf("%c",(int)e.key + 97);
+      //printf("%c",(int)e.key + 97);
+      printf("%c",(int)e.key);
     } 
   }
 }

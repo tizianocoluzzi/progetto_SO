@@ -1,70 +1,51 @@
 #include <linux/module.h> // module init e exit
-#include <linux/init.h> 
-#include <linux/input.h> // per gli input report key e alloc
-#include <linux/input-event-codes.h> // per la lista dei vari tasti
-<<<<<<< Updated upstream:test/test.c
-=======
-#include <linux/fs.h> // per le file oparations
+#include <linux/init.h>
+#include <linux/usb.h>
 
-static ssize_t device_read(struct file * file, const char __user * buffer, size_t len, loff_t * offset); //taccia il compilatore
 
-static struct input_dev* dev; // device per la simulazione di input da tastiera
-static struct file_operations fops = {.write = device_read }; // per le operazioni che vengono eseguite sul file
+// ottenuta da lsusb: Bus 001 Device 010: ID 2341:0042 Arduino SA Mega 2560 R3 (CDC ACM)
 
-static ssize_t device_read(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
-    char kbuf[100]; //allochiamo memoria come se non ci fosse un domani
-    int ret = copy_from_user(kbuf, buffer, 1);
-    if(ret < 0) return -EFAULT;
-    kbuf[1] = '\0';
-    // TODO switch case con pressione del tasto
-    printk("ho letto: %s\n", kbuf);
-    return 1; 
+#define VENDOR_ID 2341
+#define PRODUCT_ID 0042
+
+//dichiarazione di quali dispositvi 
+static struct usb_device_id usb_table[] = {
+    {USB_DEVICE(VENDOR_ID, PRODUCT_ID) },
+    {},
+};
+//per attaccare effettivamente questo driver
+MODULE_DEVICE_TABLE(usb, usb_table);
+
+static int probe(struct usb_interface *interface, const struct usb_device_id *id){
+    printk("dispositivo riconosciuto");
+    return 0;
 }
->>>>>>> Stashed changes:src/chardev.c
 
-struct input_dev* dev;
-static int my_init(void)
-{
-	printk("hello - Hello, Kernel!\n");
-	
-    //crezione di input device 
-    dev = input_allocate_device();
-    if(!dev) printk("errore nell'inizializzazione");
-    
-    // le setto a zero per vedere poi che fanno
-    // inizializzazione
-    dev->name = "test_dev";
-    dev->id.bustype = BUS_VIRTUAL;
-    dev->id.vendor = 0;
-    dev->id.product = 0;
-    dev->id.version = 0;
-    //in teoria dovrebbe abilitare i bit ad essere inviati
-    dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
-    for (int i = 0; i < KEY_CNT; i++)
-        set_bit(i, dev->keybit);
-    
-    //registrazione
-    int error = input_register_device(dev);
-    
-    if(error) printk("errore nella registrazione");
-    // in teoria dovrebbe inviare il tasto A
-    // non viene inviato perche il dispositivo non è ancora effettivamente inizializzato
-    input_report_key(dev, KEY_A, 1);
-    input_sync(dev);
-    input_report_key(dev, KEY_A, 0);
-    input_sync(dev);
+static void disconnect(struct usb_interface *interface){
+    printk("disconnetto");
+}
+
+static struct usb_driver driver = {
+    .name = "macro_keyboard",
+    .id_table = usb_table,
+    .probe = probe,
+    .disconnect = disconnect
+};
+
+static int my_init(void){
+    int res = usb_register(&driver);
+	printk("Init function\n");
+    if(res){
+        printk("errore durante la registrazione del device");
+        return (-res);
+    }
+    printk("dispositivo registrato");
     return 0;
 }
 
 static void my_exit(void)
 {
-    //al momento lascio la pressione del tasto per assicurarmi che esca 
-    input_report_key(dev, KEY_A, 1);
-    input_sync(dev);
-    input_report_key(dev, KEY_A, 0);
-    input_sync(dev);
-    // la free non è necessaria se si fa unregister
-	input_unregister_device(dev);
+    usb_deregister(&driver);
     printk("hello - Goodbye, Kernel!\n");
 }
 

@@ -146,3 +146,10 @@ a livello fisico ho realizzato la tastiera con soli 8 tasti perche lo spazio sul
 - controllare tutto e fare tutti i test necessari
 - scrivere lo schema della tastiera e documentare tutto
 - provare a trovare la soluzione unica senza demone
+
+### 14.04.2025
+in realtà è il riassuntino di micro giornate, ho tentato di sviluppare la versione senza entrare in userspace o almeno ho iniziato a farlo blacklistando cdc_acm con immensa fatica 
+(devo anche ricordarmi di toglierlo dalla blacklist sennò sono dolori), ho parlato con il professore per quanto riguarda la possibilità di percorrere questa strada o un'altra, 
+abbiamo concordato di continuare con il demone in user space che si occupa di mappare i dati inviati da arduino sulle combinazioni di tasti, 
+in questo modo è tutto molto piu modulabile e posso creare un programma sempre in userspace che modifica un file in cui sono memorizzate le varie macro, 
+poi il demone all'avvio lo legge e memorizza le linee in un array

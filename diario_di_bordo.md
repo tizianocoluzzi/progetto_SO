@@ -146,3 +146,7 @@ a livello fisico ho realizzato la tastiera con soli 8 tasti perche lo spazio sul
 - controllare tutto e fare tutti i test necessari
 - scrivere lo schema della tastiera e documentare tutto
 - provare a trovare la soluzione unica senza demone
+
+### 14.05.2025
+nella branch dell'usb è documentato male cosa ho fatto nel pratico, col professore si concorda di proseguire col demone userspace che si occupa della mappatura delle macro 
+e io aggiungo con la reazione di una app che consente di modificare un file da cui leggere le macro alla prima esecuzione

@@ -19,7 +19,7 @@ static struct class* chardev_class = NULL;
 static struct cdev cdev;
 static dev_t d;
 static int major;
-
+static char kchar[1024];
 /*parsing delle combinazioni di tasti 
 <qualunque cosa contenuta qui dentro è una pressione unica>
 non possono esserci cose nested (rende inutile il fatto di avere le parestesi angolate ma magari nel tempo migliorerà)
@@ -142,9 +142,9 @@ static void parser(const char* buf){
                 rilascia_tasto(*buf);
                 idx += 1;
             }
-            //routine di rilascio, svuotare una eventuale linked listo o un array
+            //routine di rilascio
             //solo nel caso era stato gia incontrato qualcosa
-            buf += idx; //torno allo stato precendente
+            buf += idx+1; //torno allo stato precendente il piu uno perche viene conteggiato anche il --buf del while
             idx = 0;
             stato = 0;
         }
@@ -169,25 +169,28 @@ inline int char_to_index(char c){
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
     /*funzione di scrittura per le fops*/
-    char kchar; //allochiamo memoria come se non ci fosse un domani
-    
-    int ret = copy_from_user(&kchar, buffer, 1);
+    printk("chiamata funzione di write");    
+    int ret = copy_from_user(&kchar, buffer, len); //kchar dichiarato fuori perche superava lo stack locale
     if(ret < 0) return -EFAULT;
 
-
+    //COMMENTATO PERCHE ADESSO IN INPUT RICEVO LA STRINGA DI MACRO
+    
     //test per key in realta questa cosa non deve essere effettuata qui ma in parser, quello che leggon dal dev è l'indice dell'array map
-    ret = char_to_index(kchar);
-    if(ret < 0){
-        printk("errore nella conversione o indice non valido, ritornato: %d ", ret);
+    //ret = char_to_index(kchar);
+    //if(ret < 0){
+    //    printk("errore nella conversione o indice non valido, ritornato: %d ", ret);
         //ritorno -1 perche non so bene gli error code delle .write
-        return 1;
-    }
+    //    return 1;
+    //}
     
     //printk("vado a leggere nella cella %d di map: %s", ret, map[ret]);
     //pressione dei tasti
-    parser(map[ret]);
+    parser(kchar);
+    for(int i = 0; i < 1024; i++){
+        kchar[i] = '\0';
+    }
     // printk("ho letto: %s\n che corrisponde al valore %u", kbuf, pressed);
-    return 1; 
+    return len; 
 }
 
 static int my_init(void)

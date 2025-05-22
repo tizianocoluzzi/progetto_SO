@@ -1,6 +1,9 @@
 CC = gcc
 flags = -Wall -g -std=c99 
 
+all: demone chardev
+
+
 demone:
 	$(CC) $(flags) -o demone demone.c
 

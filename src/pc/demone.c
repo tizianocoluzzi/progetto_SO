@@ -3,12 +3,65 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/types.h>
 #include <unistd.h> 
 #include <termios.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define SERIAL_PATH "/dev/ttyACM0" 
 #define DEVICE_PATH "/dev/tiziano_chardev0" //da aggiungere
+#define MACRO_PATH "config.txt"
+#define MAX_MACRO 16
+#define MAX_MACRO_LEN 1024
+
+//TODO un controllo integrità per evitare cicli infiniti
+//consisterebbe nel controllare se ci sono tutte le righe
+
 int main(){
+    // lettura del file di configurazione, se non esiste ne crea uno vuoto
+    int ret;
+    int macro_fd = open(MACRO_PATH, O_RDONLY, 0666);
+    if(macro_fd < 0){
+        if(errno == ENOENT){
+            printf("il file non esiste, ne inizializzo uno vuoto\n");
+            macro_fd = open(MACRO_PATH, O_WRONLY | O_CREAT, 0666);
+            for(int i = 0; i < MAX_MACRO; i++){
+                char term = '\n';
+                ret = write(macro_fd, &term, 1);
+                if(ret == -1){
+                    perror("errore inizializzazione file\n");
+                    return -1;
+                }
+            }
+            close(macro_fd);
+            macro_fd = open(MACRO_PATH, O_RDONLY, 0666);
+       }
+        else{
+            perror("errore apertura file macro");
+            return -1;
+        }
+    }
+    //copia del file in memoria
+    char macro_map[MAX_MACRO][MAX_MACRO_LEN];
+    for (int i = 0; i < MAX_MACRO; i++){
+        int j = 0;
+        while(j < MAX_MACRO_LEN-1){
+            ret = read(macro_fd, &(macro_map[i][j]), 1);
+            if(macro_map[i][j++] == '\n') break; //da rivedere l'efficienza
+            if(ret == 0) break;
+            if(ret < 0){ //la gestione di EINTR è da fare
+                perror("errore nella lettura del file delle macro");
+                return -1;
+            }
+            
+        }
+        //aggiunta terminatore stringa
+        macro_map[i][j] = '\0';
+        printf("letta riga %d: %s", i, macro_map[i]);
+    } 
+    close(macro_fd);
+    printf("aquisizione file effettuata\n"); 
     //N.B. per aprire il file ho dovuto dare i permessi al device /dev/ttyACM0 il che potrebbe essere un problema per la scalabilità
     int fd = open(SERIAL_PATH, O_RDONLY | O_NOCTTY);
     // struttura per la gestione delle opzioni del file
@@ -34,17 +87,26 @@ int main(){
     tcflush(fd, TCIFLUSH);
     tcsetattr(fd, TCSANOW, &opts);
 
-    char buf[1024];
-    memset(buf, 0, 1024);
+    u_int8_t buf = 0;
     while(1){
-        int ret = read(fd, buf, 1023);
+        ret = read(fd, &buf, 1);
         if( ret < 0){ 
             perror("error reading");
             return -1;
         }
         if (ret == 0) continue;
+        int len = strlen(macro_map[buf]);
         //printf("line: %s\n", buf);
-        write(device_fd, buf, 1);
+        int scritti = 0;
+        while(scritti < len){
+            ret = write(device_fd, macro_map[buf]+scritti, len-scritti);
+            if(ret < 0){
+                perror("errore nella scrittura sul device\n");
+                break;
+            }
+            scritti += ret;
+        }
+        
     }
     return 0;
 }

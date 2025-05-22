@@ -153,3 +153,15 @@ in realtà è il riassuntino di micro giornate, ho tentato di sviluppare la vers
 abbiamo concordato di continuare con il demone in user space che si occupa di mappare i dati inviati da arduino sulle combinazioni di tasti, 
 in questo modo è tutto molto piu modulabile e posso creare un programma sempre in userspace che modifica un file in cui sono memorizzate le varie macro, 
 poi il demone all'avvio lo legge e memorizza le linee in un array
+
+### 22.03.2025
+sviluppata la versione con la personalizzazione del file, creato il file macro che permette di editare le varie macro nel file config.txt, presumibilmente dovrebbe stare in ~/.config
+modificato il chardev affinche legga piu di un byte (c'è stato un piccolo intoppo e ho rischiato il pc, ho fatto il return di ret nella funzione write, ho scoperto dopo che 
+copy_from_user ritorna il numero dei byte_mancanti, è stato brutto), ho modificato il demone affinche all'avvio copi il file config in un aray di stringhe, 
+userà ques'ultimo per inviare le varie macro. 
+Problemi con macro, non crea il file mentre chardev lo fa, devo fare in modo che entrambi lo creino e lo facciano identicamente, creerò forse la stessa funzione e creo un common.h
+in questo modo posso definire più facilmente anche le costanti comuni che uso in entrambi i file
+
+#### obiettivi futuri
+- schema tastiera e documentazione
+- creazione di common.h e common.c

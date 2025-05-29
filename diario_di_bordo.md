@@ -147,14 +147,14 @@ a livello fisico ho realizzato la tastiera con soli 8 tasti perche lo spazio sul
 - scrivere lo schema della tastiera e documentare tutto
 - provare a trovare la soluzione unica senza demone
 
-### 14.04.2025
+### 14.05.2025
 in realtà è il riassuntino di micro giornate, ho tentato di sviluppare la versione senza entrare in userspace o almeno ho iniziato a farlo blacklistando cdc_acm con immensa fatica 
 (devo anche ricordarmi di toglierlo dalla blacklist sennò sono dolori), ho parlato con il professore per quanto riguarda la possibilità di percorrere questa strada o un'altra, 
 abbiamo concordato di continuare con il demone in user space che si occupa di mappare i dati inviati da arduino sulle combinazioni di tasti, 
 in questo modo è tutto molto piu modulabile e posso creare un programma sempre in userspace che modifica un file in cui sono memorizzate le varie macro, 
 poi il demone all'avvio lo legge e memorizza le linee in un array
 
-### 22.03.2025
+### 22.05.2025
 sviluppata la versione con la personalizzazione del file, creato il file macro che permette di editare le varie macro nel file config.txt, presumibilmente dovrebbe stare in ~/.config
 modificato il chardev affinche legga piu di un byte (c'è stato un piccolo intoppo e ho rischiato il pc, ho fatto il return di ret nella funzione write, ho scoperto dopo che 
 copy_from_user ritorna il numero dei byte_mancanti, è stato brutto), ho modificato il demone affinche all'avvio copi il file config in un aray di stringhe, 
@@ -165,3 +165,12 @@ in questo modo posso definire più facilmente anche le costanti comuni che uso i
 #### obiettivi futuri
 - schema tastiera e documentazione
 - creazione di common.h e common.c
+
+### 29.05.2025
+creati common.h e common.c per la gestione dell'inizializzazione del file config vuoto, in questo modo creano lo stesso file
+durante dei test macro.c mi sono accorto che se interrompevo con Ctrl-c mentre scrivevo la modifica della macro si eliminava tutto il file, il motivo è molto banale, lo aprivo a inizio 
+funzione invece che strettamente vicino all'utilizzo
+aggiunta l'opzione di vedere la documentazione delle macro, con la creazione del file docs.txt e della funzione leggi_regole
+
+#### obiettivi futuri
+- schema tastiera e documentazione

@@ -9,32 +9,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
+
 #define SERIAL_PATH "/dev/ttyACM0" 
 #define DEVICE_PATH "/dev/tiziano_chardev0" //da aggiungere
-#define MACRO_PATH "config.txt"
-#define MAX_MACRO 16
-#define MAX_MACRO_LEN 1024
 
-//TODO un controllo integrità per evitare cicli infiniti
-//consisterebbe nel controllare se ci sono tutte le righe
-
+//attenzione, ho scoperto la possibilità di usare flock sul file in modo da evitare accessi concorrenti
 int main(){
     // lettura del file di configurazione, se non esiste ne crea uno vuoto
     int ret;
     int macro_fd = open(MACRO_PATH, O_RDONLY, 0666);
     if(macro_fd < 0){
         if(errno == ENOENT){
-            printf("il file non esiste, ne inizializzo uno vuoto\n");
-            macro_fd = open(MACRO_PATH, O_WRONLY | O_CREAT, 0666);
-            for(int i = 0; i < MAX_MACRO; i++){
-                char term = '\n';
-                ret = write(macro_fd, &term, 1);
-                if(ret == -1){
-                    perror("errore inizializzazione file\n");
-                    return -1;
-                }
+            ret = inizializza();
+            if(ret < 0){
+                perror("errore nell'inizializzazione del file");
+                return -1;
             }
-            close(macro_fd);
             macro_fd = open(MACRO_PATH, O_RDONLY, 0666);
        }
         else{
@@ -58,7 +49,7 @@ int main(){
         }
         //aggiunta terminatore stringa
         macro_map[i][j] = '\0';
-        printf("letta riga %d: %s", i, macro_map[i]);
+        printf("macro[%d]: %s", i, macro_map[i]);
     } 
     close(macro_fd);
     printf("aquisizione file effettuata\n"); 

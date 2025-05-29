@@ -5,21 +5,39 @@
 #include <string.h>
 #include <errno.h>
 
-#define MACRO_PATH "config.txt"
-#define MAX_MACRO 16
-#define MAX_MACRO_LEN 1024
+#include "common.h"
 
 static char macro_map[MAX_MACRO][MAX_MACRO_LEN];
 
+int leggi_regole(){
+    char c;
+    int fd = open("docs.txt", O_RDONLY, 0);
+    if(fd == -1){
+        perror("errore nell'apertura della documentazione\n");
+        return -1;
+    }
+    while(read(fd,&c,1 ) == 1){
+        putc(c, stdout);
+    }
+    close(fd);
+    return 0;
+}
+
 int popola(){
     int ret;
-    int fd = open(MACRO_PATH, O_RDONLY | O_CREAT, 0);
+    int fd = open(MACRO_PATH, O_RDONLY, 0);
     if(fd < 0){
         if(errno == ENOENT){
-            //creazione di un file config
+            ret = inizializza();
+            if(ret < 0){
+                perror("errore nell'inizializzazione del file");
+                return -1;
+            }           
         }
-        perror("non è stato possibile aprire il file");
-        return -1;
+        else{
+            perror("non è stato possibile aprire il file");
+            return -1;
+        }
     }
     
     for (int i = 0; i < MAX_MACRO; i++){
@@ -52,17 +70,13 @@ void elenco_macro(){
 
 void modifica_macro(){
     int ret;
-    int fd = open(MACRO_PATH, O_WRONLY | O_TRUNC, 0);
-    if(fd < 0){
-        perror("non è stato possibile aprire il file:");
-        return;
-    }
+    
     //stampa macro_map    
     for (int i = 0; i < MAX_MACRO; i++){
         printf("macro[%d]: %s", i, macro_map[i]);
     }
     // TODO renderlo interattivo con la tastiera
-    printf("inserisci il numero della macro che vuoi modificare [0-15]:");
+    printf("\ninserisci il numero della macro che vuoi modificare [0-15]:\n");
     int i;
 INPUT2:
     scanf("%d", &i);
@@ -78,8 +92,13 @@ INPUT2:
     macro_map[i][len+1] = '\0';
     printf("hai inserito %s\n", macro_map[i]);
     
+    int fd = open(MACRO_PATH, O_WRONLY | O_TRUNC, 0);
+    if(fd < 0){
+        perror("non è stato possibile aprire il file:");
+        return;
+    }
     for(int j = 0; j < MAX_MACRO; j++){
-        printf("provo a scrivere %s", macro_map[j]);
+        //printf("provo a scrivere %s", macro_map[j]);
         len = strlen(macro_map[j]);
         ret = 0;
         int scritti = 0;
@@ -95,12 +114,12 @@ INPUT2:
             }
             scritti += ret;
         }
-        printf("ho scrito %d byte\n", scritti);
-        printf("ho scritto: %s", macro_map[j]);
+        //printf("ho scrito %d byte\n", scritti);
+        //printf("ho scritto: %s", macro_map[j]);
     }
 
     close(fd);
-    elenco_macro();  
+    printf("modifica avvenuta con successo, per vedere gli effetti ricorda di riavviare il demone\n");
 }
 
 int main(){    
@@ -111,12 +130,15 @@ int main(){
     }
     while(1){
         printf("-----personalizzazione macro-----\n");
-        printf("seleziona una delle seguenti opzioni:\n[1]vedi le macro attuali\n[2]registra una macro\n[3]esci\n");
-        int i;
-
+        printf("seleziona una delle seguenti opzioni:\n[1]vedi le macro attuali\n[2]registra una macro\n[3]vedi le regole di formattazione\n[4]esci\n");
+        int i = 0;
+        char input[16]; //nel caso voglio inserire altre opzioni
 INPUT:
-        // DA CORREGGERE LA GESTIONE DELLA LETTURA DEL FILE, VA FATTA UNA VOLTA SOLA, LA SCRITTURA OGNI VOLTA CHE VIENE RICHIESTA
-        scanf("%d", &i);
+        if( fgets(input, 16, stdin) == NULL){
+            perror("errore nell'inserimento del numero");
+            return -1;
+        }
+        sscanf(input, "%d", &i);
         if(i == 1){
             printf("lista delle macro\n");
             elenco_macro();
@@ -126,6 +148,9 @@ INPUT:
             modifica_macro();
         }
         else if(i == 3){
+            leggi_regole();
+        }
+        else if(i == 4){
             return 0;
         }
         else{
@@ -134,5 +159,5 @@ INPUT:
         }
 
     }   
-}
-    
+    }
+        

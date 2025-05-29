@@ -1,0 +1,13 @@
+1. Formattazione delle macro:
+    <...> la coppia di parentesi angolari contengono insiemi di tasti che vengono premuti contemporaneamente
+        per la precisione vengono permuti nell'ordine di scrittura e rilasciati nell'ordine inverso
+    ogni lettera minuscola indica esettamente la lettera
+    le lettere maiuscolo hanno la loro funzione speciale es: A -> alt, C -> Ctrl
+
+2. Mappatura tasti speciali:
+    A  = RIGHTALT,
+    C  = RIGHTCTRL,
+    E  = ENTER,
+    S  = RIGHTSHIFT
+
+

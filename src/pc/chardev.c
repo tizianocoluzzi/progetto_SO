@@ -82,7 +82,7 @@ static unsigned char key[255] = {
     ['A']  = KEY_RIGHTALT,
     ['C']  = KEY_RIGHTCTRL,
     ['E']  = KEY_ENTER, // non lo mappo con \n
-    ['S']  = KEY_RIGHTSHIFT
+    ['S']  = KEY_RIGHTSHIFT,
     //ce ne sono molti di piu ma al momento ce li facciamo andare bene
 };
 

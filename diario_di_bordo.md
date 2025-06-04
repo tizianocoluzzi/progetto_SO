@@ -174,3 +174,8 @@ aggiunta l'opzione di vedere la documentazione delle macro, con la creazione del
 
 #### obiettivi futuri
 - schema tastiera e documentazione
+
+### 04.06.2025
+riorganizzazione cratelle dato che il makefile dava problemi dopo l'aggiunta della compilazione dei file .o, ha piu senso cosi, 
+creati due makefile separati e uno unico che va a chiamare gli altri due, avendo cambiato computer e avendo il kernel nuovo mi da un errore che prima era un warning, su un cast 
+devo risolvere

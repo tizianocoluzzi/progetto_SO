@@ -97,7 +97,7 @@ int main(){
             }
             scritti += ret;
         }
-        
+    close(fd);            
     }
     return 0;
 }

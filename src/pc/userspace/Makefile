@@ -9,7 +9,10 @@ macro: macro.o common.o
 
 demone: demone.o common.o
 	$(CC) $(flags) -o demone demone.o common.o
-clean: 
+clean:
+	rm ./demone.o
+	rm ./common.o
+	rm ./macro.o
 	rm ./demone
 	rm ./macro
 .PHONY: clean

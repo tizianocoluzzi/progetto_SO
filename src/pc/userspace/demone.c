@@ -8,15 +8,34 @@
 #include <termios.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "common.h"
 
 #define SERIAL_PATH "/dev/ttyACM0" 
 #define DEVICE_PATH "/dev/tiziano_chardev0" //da aggiungere
+int fd = -1;
+int device_fd = -1;
+
+void cleanup(int signo){
+    if(fd > -1){
+        close(fd);
+    }
+    if(device_fd > -1){
+        close(fd);
+    }
+    exit(0);
+}
 
 //attenzione, ho scoperto la possibilità di usare flock sul file in modo da evitare accessi concorrenti
 int main(){
     // lettura del file di configurazione, se non esiste ne crea uno vuoto
+    struct sigaction sig;
+    memset((void*) &sig, 0, sizeof(sig)); 
+    sig.sa_handler = cleanup;
+    sigaction(SIGTERM, &sig, NULL);
+    sigaction(SIGHUP, &sig, NULL);
+    sigaction(SIGINT, &sig, NULL);
     int ret;
     int macro_fd = open(MACRO_PATH, O_RDONLY, 0666);
     if(macro_fd < 0){
@@ -53,22 +72,24 @@ int main(){
     } 
     close(macro_fd);
     printf("aquisizione file effettuata\n"); 
-    //N.B. per aprire il file ho dovuto dare i permessi al device /dev/ttyACM0 il che potrebbe essere un problema per la scalabilità
-    int fd = open(SERIAL_PATH, O_RDONLY | O_NOCTTY);
-    // struttura per la gestione delle opzioni del file
-    struct termios opts;
-    int device_fd = open(DEVICE_PATH, O_WRONLY);
+    
+    fd = open(SERIAL_PATH, O_RDONLY | O_NOCTTY);
     if (fd < 0) {
         perror("il dispositivo non è collegato o non è in /dev/ttyACM0\n");
         return -1;
     }
+    // struttura per la gestione delle opzioni del file
+    struct termios opts;
+    memset((void*) &opts, 0, sizeof(opts)); 
+    device_fd = open(DEVICE_PATH, O_WRONLY);
+    
     if(device_fd < 0){
         perror("il kernel module non è stato caricato");
+        close(fd);
         return -1;
     }
     
     opts.c_cflag = B19200 | CS8 | CLOCAL | CREAD; // baudrate, bit per messaggio, controllo del segnale, abilitazione dispositivo
-    // le setto a zero per vedere poi che fanno
     // le flag le sto usando praticamente solo in controllo
     opts.c_iflag = 0;
     opts.c_oflag = 0;
@@ -80,12 +101,20 @@ int main(){
 
     u_int8_t buf = 0;
     while(1){
+
+    READ:
         ret = read(fd, &buf, 1);
-        if( ret < 0){ 
+        if( ret < 0){
+            if(errno == EINTR) goto READ;
             perror("error reading");
-            return -1;
+            ret = -1;
+            goto CLEANUP;
         }
         if (ret == 0) continue;
+        if(buf > MAX_MACRO -1){
+            printf("numero della macro non valido\n");
+            continue; //passo semplicemente alla prossima lettura
+        }    
         int len = strlen(macro_map[buf]);
         //printf("line: %s\n", buf);
         int scritti = 0;
@@ -97,7 +126,10 @@ int main(){
             }
             scritti += ret;
         }
-    close(fd);            
     }
-    return 0;
+    ret = 0;
+CLEANUP:
+    close(fd);            
+    close(device_fd);            
+    return ret;
 }

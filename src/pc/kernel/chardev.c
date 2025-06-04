@@ -89,17 +89,14 @@ static unsigned char key[255] = {
 
 //esempio di possibile mappatura
 //ad un tasto premuto sull'arduino corrispone una combinazioni di tasti, definita in questo array
-static unsigned char* map[MAX_MACRO_NUMBER] = {
-    "<abc>","<Cs>", "<Cc>", "<Cv>", "<CSc>", "<CSv>", "<abc>a<abv>","","","","","","","","",""
-};
 
 inline void premi_tasto(const char tasto){
-    input_report_key(dev, key[tasto], 1);
+    input_report_key(dev, key[(u_int8_t) tasto], 1);
     input_sync(dev);
 }
 
 inline void rilascia_tasto(const char tasto){
-    input_report_key(dev, key[tasto], 0);
+    input_report_key(dev, key[(u_int8_t) tasto], 0);
     input_sync(dev);
 }
 
@@ -246,12 +243,13 @@ static int my_init(void)
         unregister_chrdev_region(d, 1);
         return res;
     }
-    res = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");
-    if(IS_ERR(res)){
+    void* ret;
+    ret = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");
+    if(IS_ERR(ret)){
         printk("errore nella creazione del device\n");
         class_destroy(chardev_class);
         unregister_chrdev_region(d, 1);
-        return res;
+        return -1;
     }
     printk("device registrato con major %d\n", major);
 

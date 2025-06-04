@@ -178,4 +178,5 @@ aggiunta l'opzione di vedere la documentazione delle macro, con la creazione del
 ### 04.06.2025
 riorganizzazione cratelle dato che il makefile dava problemi dopo l'aggiunta della compilazione dei file .o, ha piu senso cosi, 
 creati due makefile separati e uno unico che va a chiamare gli altri due, avendo cambiato computer e avendo il kernel nuovo mi da un errore che prima era un warning, su un cast 
-devo risolvere
+devo risolvere, risolto nel pomeriggio, aggiunti memset per evitare problemi con valgrind e chiusure dei file con la gestione dei cleanup, ho aggiunto un loop per la read che 
+mi sembra un po particolare, forse lo evirei, in teoria adesso il demone dovrebbe essere apposto per quanto riguarda valgrind

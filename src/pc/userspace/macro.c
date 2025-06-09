@@ -75,7 +75,6 @@ void modifica_macro(){
     for (int i = 0; i < MAX_MACRO; i++){
         printf("macro[%d]: %s", i, macro_map[i]);
     }
-    // TODO renderlo interattivo con la tastiera
     printf("\ninserisci il numero della macro che vuoi modificare [0-15]:\n");
     int i;
 INPUT2:

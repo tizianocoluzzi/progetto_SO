@@ -71,9 +71,9 @@ int main(int argc, char* argv[]){
         int j = 0;
         while(j < MAX_MACRO_LEN-1){
             ret = read(macro_fd, &(macro_map[i][j]), 1);
-            if(macro_map[i][j++] == '\n') break; //da rivedere l'efficienza
+            if(macro_map[i][j++] == '\n') break;
             if(ret == 0) break;
-            if(ret < 0){ //la gestione di EINTR è da fare
+            if(ret < 0){ 
                 perror("errore nella lettura del file delle macro");
                 return -1;
             }
@@ -143,7 +143,7 @@ int main(int argc, char* argv[]){
             ret = -1;
             goto CLEANUP;
         }
-        //polling sulla read
+
         if (ret == 0) continue;
         if(buf > MAX_MACRO -1){
             printf("numero della macro non valido\n");

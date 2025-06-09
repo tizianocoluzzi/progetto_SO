@@ -161,7 +161,7 @@ static void parser(const char* buf){
 inline int char_to_index(char c){
     /*funzione converte un carattere in un index valido per l'array map*/
     printk("converto il carattere %c che in intero è %d allora ho %d", c, c, c-97);
-    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; // mi sembra che la a parta da 97 nel kernel
+    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; 
 }
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
@@ -170,18 +170,6 @@ static ssize_t device_write(struct file * file, const char __user * buffer, size
     int ret = copy_from_user(&kchar, buffer, len); //kchar dichiarato fuori perche superava lo stack locale
     if(ret < 0) return -EFAULT;
 
-    //COMMENTATO PERCHE ADESSO IN INPUT RICEVO LA STRINGA DI MACRO
-    
-    //test per key in realta questa cosa non deve essere effettuata qui ma in parser, quello che leggon dal dev è l'indice dell'array map
-    //ret = char_to_index(kchar);
-    //if(ret < 0){
-    //    printk("errore nella conversione o indice non valido, ritornato: %d ", ret);
-        //ritorno -1 perche non so bene gli error code delle .write
-    //    return 1;
-    //}
-    
-    //printk("vado a leggere nella cella %d di map: %s", ret, map[ret]);
-    //pressione dei tasti
     parser(kchar);
     for(int i = 0; i < 1024; i++){
         kchar[i] = '\0';
@@ -204,7 +192,7 @@ static int my_init(void)
     dev->id.vendor = 0;
     dev->id.product = 0;
     dev->id.version = 0;
-    //in teoria dovrebbe abilitare i bit ad essere inviati
+    //dovrebbe abilitare i bit ad essere inviati
     dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
     for (int i = 0; i < KEY_CNT; i++)
         set_bit(i, dev->keybit);
@@ -224,6 +212,7 @@ static int my_init(void)
         input_unregister_device(dev); // la pulizia è necessaria
     }*/
     //ALTERNATIVA CON ALLOC
+    //necessaria poichè il vecchio metodo era deprecato, lo lascio per completezza
     int res = alloc_chrdev_region(&d, 0, 1, "tiziano_chardev");
     if(res < 0){
         printk("errore in alloc chardev region: %d\n", res);

@@ -180,3 +180,8 @@ riorganizzazione cratelle dato che il makefile dava problemi dopo l'aggiunta del
 creati due makefile separati e uno unico che va a chiamare gli altri due, avendo cambiato computer e avendo il kernel nuovo mi da un errore che prima era un warning, su un cast 
 devo risolvere, risolto nel pomeriggio, aggiunti memset per evitare problemi con valgrind e chiusure dei file con la gestione dei cleanup, ho aggiunto un loop per la read che 
 mi sembra un po particolare, forse lo evirei, in teoria adesso il demone dovrebbe essere apposto per quanto riguarda valgrind
+
+### 09.06.2025
+evitato il polling per quanto riguarda utilizzando la select, ho impostato un timeval di 5 secondi abbstanza simbolico, ho rimosso il loop per la read su ttyACM* perche per definizione se ritorna 0 è EOF, ho cambiato la gestione del SIG_INT in SIG_IGN invece che chiudere il programma, 
+ho reso dinamica la path di arduino, se non ci sono argomenti di default è ACM0, è concettualmnente sbagliato perche potrebbe intaccare altri device
+puliti anche tutti i commenti nella commit successiva

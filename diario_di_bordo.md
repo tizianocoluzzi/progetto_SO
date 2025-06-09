@@ -148,5 +148,41 @@ a livello fisico ho realizzato la tastiera con soli 8 tasti perche lo spazio sul
 - provare a trovare la soluzione unica senza demone
 
 ### 14.05.2025
-nella branch dell'usb è documentato male cosa ho fatto nel pratico, col professore si concorda di proseguire col demone userspace che si occupa della mappatura delle macro 
-e io aggiungo con la reazione di una app che consente di modificare un file da cui leggere le macro alla prima esecuzione
+in realtà è il riassuntino di micro giornate, ho tentato di sviluppare la versione senza entrare in userspace o almeno ho iniziato a farlo blacklistando cdc_acm con immensa fatica 
+(devo anche ricordarmi di toglierlo dalla blacklist sennò sono dolori), ho parlato con il professore per quanto riguarda la possibilità di percorrere questa strada o un'altra, 
+abbiamo concordato di continuare con il demone in user space che si occupa di mappare i dati inviati da arduino sulle combinazioni di tasti, 
+in questo modo è tutto molto piu modulabile e posso creare un programma sempre in userspace che modifica un file in cui sono memorizzate le varie macro, 
+poi il demone all'avvio lo legge e memorizza le linee in un array
+
+### 22.05.2025
+sviluppata la versione con la personalizzazione del file, creato il file macro che permette di editare le varie macro nel file config.txt, presumibilmente dovrebbe stare in ~/.config
+modificato il chardev affinche legga piu di un byte (c'è stato un piccolo intoppo e ho rischiato il pc, ho fatto il return di ret nella funzione write, ho scoperto dopo che 
+copy_from_user ritorna il numero dei byte_mancanti, è stato brutto), ho modificato il demone affinche all'avvio copi il file config in un aray di stringhe, 
+userà ques'ultimo per inviare le varie macro. 
+Problemi con macro, non crea il file mentre chardev lo fa, devo fare in modo che entrambi lo creino e lo facciano identicamente, creerò forse la stessa funzione e creo un common.h
+in questo modo posso definire più facilmente anche le costanti comuni che uso in entrambi i file
+
+#### obiettivi futuri
+- schema tastiera e documentazione
+- creazione di common.h e common.c
+
+### 29.05.2025
+creati common.h e common.c per la gestione dell'inizializzazione del file config vuoto, in questo modo creano lo stesso file
+durante dei test macro.c mi sono accorto che se interrompevo con Ctrl-c mentre scrivevo la modifica della macro si eliminava tutto il file, il motivo è molto banale, lo aprivo a inizio 
+funzione invece che strettamente vicino all'utilizzo
+aggiunta l'opzione di vedere la documentazione delle macro, con la creazione del file docs.txt e della funzione leggi_regole
+
+#### obiettivi futuri
+- schema tastiera e documentazione
+
+### 04.06.2025
+riorganizzazione cratelle dato che il makefile dava problemi dopo l'aggiunta della compilazione dei file .o, ha piu senso cosi, 
+creati due makefile separati e uno unico che va a chiamare gli altri due, avendo cambiato computer e avendo il kernel nuovo mi da un errore che prima era un warning, su un cast 
+devo risolvere, risolto nel pomeriggio, aggiunti memset per evitare problemi con valgrind e chiusure dei file con la gestione dei cleanup, ho aggiunto un loop per la read che 
+mi sembra un po particolare, forse lo evirei, in teoria adesso il demone dovrebbe essere apposto per quanto riguarda valgrind
+
+### 09.06.2025
+evitato il polling per quanto riguarda utilizzando la select, ho impostato un timeval di 5 secondi abbstanza simbolico, ho rimosso il loop per la read su ttyACM* perche per definizione se ritorna 0 è EOF, ho cambiato la gestione del SIG_INT in SIG_IGN invece che chiudere il programma, 
+ho reso dinamica la path di arduino, se non ci sono argomenti di default è ACM0, è concettualmnente sbagliato perche potrebbe intaccare altri device
+puliti anche tutti i commenti nella commit successiva
+

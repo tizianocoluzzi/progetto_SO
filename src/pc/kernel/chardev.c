@@ -19,7 +19,7 @@ static struct class* chardev_class = NULL;
 static struct cdev cdev;
 static dev_t d;
 static int major;
-
+static char kchar[1024];
 /*parsing delle combinazioni di tasti 
 <qualunque cosa contenuta qui dentro è una pressione unica>
 non possono esserci cose nested (rende inutile il fatto di avere le parestesi angolate ma magari nel tempo migliorerà)
@@ -82,24 +82,21 @@ static unsigned char key[255] = {
     ['A']  = KEY_RIGHTALT,
     ['C']  = KEY_RIGHTCTRL,
     ['E']  = KEY_ENTER, // non lo mappo con \n
-    ['S']  = KEY_RIGHTSHIFT
+    ['S']  = KEY_RIGHTSHIFT,
     //ce ne sono molti di piu ma al momento ce li facciamo andare bene
 };
 
 
 //esempio di possibile mappatura
 //ad un tasto premuto sull'arduino corrispone una combinazioni di tasti, definita in questo array
-static unsigned char* map[MAX_MACRO_NUMBER] = {
-    "<abc>","<Cs>", "<Cc>", "<Cv>", "<CSc>", "<CSv>", "<abc>a<abv>","","","","","","","","",""
-};
 
 inline void premi_tasto(const char tasto){
-    input_report_key(dev, key[tasto], 1);
+    input_report_key(dev, key[(u_int8_t) tasto], 1);
     input_sync(dev);
 }
 
 inline void rilascia_tasto(const char tasto){
-    input_report_key(dev, key[tasto], 0);
+    input_report_key(dev, key[(u_int8_t) tasto], 0);
     input_sync(dev);
 }
 
@@ -142,9 +139,9 @@ static void parser(const char* buf){
                 rilascia_tasto(*buf);
                 idx += 1;
             }
-            //routine di rilascio, svuotare una eventuale linked listo o un array
+            //routine di rilascio
             //solo nel caso era stato gia incontrato qualcosa
-            buf += idx; //torno allo stato precendente
+            buf += idx+1; //torno allo stato precendente il piu uno perche viene conteggiato anche il --buf del while
             idx = 0;
             stato = 0;
         }
@@ -164,30 +161,21 @@ static void parser(const char* buf){
 inline int char_to_index(char c){
     /*funzione converte un carattere in un index valido per l'array map*/
     printk("converto il carattere %c che in intero è %d allora ho %d", c, c, c-97);
-    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; // mi sembra che la a parta da 97 nel kernel
+    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; 
 }
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
     /*funzione di scrittura per le fops*/
-    char kchar; //allochiamo memoria come se non ci fosse un domani
-    
-    int ret = copy_from_user(&kchar, buffer, 1);
+    printk("chiamata funzione di write");    
+    int ret = copy_from_user(&kchar, buffer, len); //kchar dichiarato fuori perche superava lo stack locale
     if(ret < 0) return -EFAULT;
 
-
-    //test per key in realta questa cosa non deve essere effettuata qui ma in parser, quello che leggon dal dev è l'indice dell'array map
-    ret = char_to_index(kchar);
-    if(ret < 0){
-        printk("errore nella conversione o indice non valido, ritornato: %d ", ret);
-        //ritorno -1 perche non so bene gli error code delle .write
-        return 1;
+    parser(kchar);
+    for(int i = 0; i < 1024; i++){
+        kchar[i] = '\0';
     }
-    
-    //printk("vado a leggere nella cella %d di map: %s", ret, map[ret]);
-    //pressione dei tasti
-    parser(map[ret]);
     // printk("ho letto: %s\n che corrisponde al valore %u", kbuf, pressed);
-    return 1; 
+    return len; 
 }
 
 static int my_init(void)
@@ -204,7 +192,7 @@ static int my_init(void)
     dev->id.vendor = 0;
     dev->id.product = 0;
     dev->id.version = 0;
-    //in teoria dovrebbe abilitare i bit ad essere inviati
+    //dovrebbe abilitare i bit ad essere inviati
     dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_REP);
     for (int i = 0; i < KEY_CNT; i++)
         set_bit(i, dev->keybit);
@@ -224,6 +212,7 @@ static int my_init(void)
         input_unregister_device(dev); // la pulizia è necessaria
     }*/
     //ALTERNATIVA CON ALLOC
+    //necessaria poichè il vecchio metodo era deprecato, lo lascio per completezza
     int res = alloc_chrdev_region(&d, 0, 1, "tiziano_chardev");
     if(res < 0){
         printk("errore in alloc chardev region: %d\n", res);
@@ -243,12 +232,13 @@ static int my_init(void)
         unregister_chrdev_region(d, 1);
         return res;
     }
-    res = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");
-    if(IS_ERR(res)){
+    void* ret;
+    ret = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");
+    if(IS_ERR(ret)){
         printk("errore nella creazione del device\n");
         class_destroy(chardev_class);
         unregister_chrdev_region(d, 1);
-        return res;
+        return -1;
     }
     printk("device registrato con major %d\n", major);
 

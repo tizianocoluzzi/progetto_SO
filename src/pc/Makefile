@@ -1,16 +1,6 @@
-CC = gcc
-flags = -Wall -g -std=c99 
-
-demone:
-	$(CC) $(flags) -o demone demone.c
-
-obj-m += chardev.o
-
-chardev:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-
+all:
+	cd userspace && make 
+	cd kernel && make
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-	rm ./demone
-
-.PHONY: clean
+	cd kernel && make clean
+	cd userspace && make clean

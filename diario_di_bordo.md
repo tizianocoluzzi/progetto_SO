@@ -186,3 +186,5 @@ evitato il polling per quanto riguarda utilizzando la select, ho impostato un ti
 ho reso dinamica la path di arduino, se non ci sono argomenti di default è ACM0, è concettualmnente sbagliato perche potrebbe intaccare altri device
 puliti anche tutti i commenti nella commit successiva
 
+### 24.07.2025
+Creazione della nuova branch per l'implementazione di inotify per sostituire la parte di select e aggiornare automaticamente la mappatura delle macro 

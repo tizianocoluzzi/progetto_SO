@@ -1,10 +1,12 @@
 /* file per la lettura in input del driver /ttyAC0 e la scrittura su un chardev personalizzato creato nel file ./chardev.c*/
+#include <stdint.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/inotify.h>
 #include <unistd.h> 
 #include <termios.h>
 #include <stdlib.h>
@@ -31,6 +33,11 @@ void cleanup(int signo){
 int main(int argc, char* argv[]){
     int ret;
     char* serial_path;
+    int ifd = inotify_init();
+    if(ifd < 0){
+        perror("errore nell'inizializzazione di inotify");
+        return -1;
+    } 
     //il percorso dell'arduino è variabile per cui puo essere inserito da utente
     if(argc == 1){
         serial_path = "/dev/ttyACM0";
@@ -65,6 +72,12 @@ int main(int argc, char* argv[]){
             return -1;
         }
     }
+    int wd1 = inotify_add_watch(ifd, MACRO_PATH,IN_MODIFY);
+    if(wd1 < 0){
+        perror("errore nell'aggiunta di macro path in inotify");
+        return -1;
+    }
+    //NON POSSO usare inotify per /dev
     //copia del file in memoria
     char macro_map[MAX_MACRO][MAX_MACRO_LEN];
     for (int i = 0; i < MAX_MACRO; i++){
@@ -117,8 +130,8 @@ int main(int argc, char* argv[]){
 
     u_int8_t buf = 0;
     struct timeval tv;
-        fd_set readfds;
-        while(1){
+    fd_set readfds;
+    while(1){
         ret = 0;
         while(ret == 0){
             
@@ -136,6 +149,15 @@ int main(int argc, char* argv[]){
             }
 //            printf("here\n");
         }
+        char ev_buf[sizeof(struct inotify_event)];
+        ret = read(ifd, &ev_buf, sizeof(struct inotify_event));
+        char* p;
+        printf("letti %d bytes", ret);
+        struct inotify_event* ev = (struct inotify_event *)p;
+        if(ev->wd == wd1){
+            printf("modificate macro, TODO aggiornare\n");
+        }
+        
         ret = read(fd, &buf, 1);
         //non gestisco errno==EINTR perche ret=0 vuol dire EOF
         if(ret < 0){

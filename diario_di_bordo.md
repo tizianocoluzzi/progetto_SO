@@ -188,3 +188,8 @@ puliti anche tutti i commenti nella commit successiva
 
 ### 24.07.2025
 Creazione della nuova branch per l'implementazione di inotify per sostituire la parte di select e aggiornare automaticamente la mappatura delle macro 
+
+### 29.07.2025
+primo tentativo di implementazione di inotify, studiando la documentazione e facendo delle prove si capisce che non si puo utilizzare inotify per segnalare dei cambiamenti 
+sulla seriale, posso solo aggiungere il file macro alla select per avere tutto single thread o single process, altrimenti potrei creare un processo che modifica al file 
+ad ogni cambiamento, genstendo il tutto con dei semafori 

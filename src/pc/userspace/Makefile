@@ -8,7 +8,7 @@ macro: macro.o common.o
 	$(CC) $(flags) -o macro macro.o common.o
 
 demone: demone.o common.o
-	$(CC) $(flags) -o demone demone.o common.o
+	$(CC) $(flags) -lpthread -o demone demone.o common.o
 clean:
 	rm ./demone.o
 	rm ./common.o

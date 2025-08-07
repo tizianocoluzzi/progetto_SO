@@ -193,3 +193,6 @@ Creazione della nuova branch per l'implementazione di inotify per sostituire la 
 primo tentativo di implementazione di inotify, studiando la documentazione e facendo delle prove si capisce che non si puo utilizzare inotify per segnalare dei cambiamenti 
 sulla seriale, posso solo aggiungere il file macro alla select per avere tutto single thread o single process, altrimenti potrei creare un processo che modifica al file 
 ad ogni cambiamento, genstendo il tutto con dei semafori 
+
+### 5.08.2025
+implementato il thread che si occupa di gestire la modifica della tabella delle macro sncronizzato con dei mutex

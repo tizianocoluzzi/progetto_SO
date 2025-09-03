@@ -115,7 +115,7 @@ static int check_formato(const char* buf){
         buf++;
     }
     if(stato == 1)
-        return -1
+        return -1;
     return 0;
 }
 

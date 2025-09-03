@@ -7,9 +7,6 @@
 #include <linux/device.h> //per la crezione automatica dei device
 #include <linux/cdev.h> //same
  
-//massimo carattere che il dispositivo puo inviare
-#define MAX_MACRO_NUMBER 16
-
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset); //taccia il compilatore
 
 static struct input_dev* dev; // device simulazione pressione dei tasti
@@ -117,6 +114,8 @@ static int check_formato(const char* buf){
         }
         buf++;
     }
+    if(stato == 1)
+        return -1
     return 0;
 }
 
@@ -156,12 +155,6 @@ static void parser(const char* buf){
         }
         buf++;
     }
-}
-
-inline int char_to_index(char c){
-    /*funzione converte un carattere in un index valido per l'array map*/
-    printk("converto il carattere %c che in intero è %d allora ho %d", c, c, c-97);
-    return (c < 0 || c > MAX_MACRO_NUMBER) ? -1 : c; 
 }
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
@@ -230,7 +223,7 @@ static int my_init(void)
     if(IS_ERR(chardev_class)){
         printk("errore nella creazione della classe\n");	
         unregister_chrdev_region(d, 1);
-        return res;
+        return -1;
     }
     void* ret;
     ret = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");

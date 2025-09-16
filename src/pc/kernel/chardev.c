@@ -1,4 +1,5 @@
 /* file kernel object per la creazione del chardev personalizzato che su azione in scrittura simula pressione dei tasti*/
+#define pr_fmt(fmt) "%s %s: " fmt, KBUILD_MODNAME, __func__
 #include <linux/module.h> // module init e exit
 #include <linux/init.h> 
 #include <linux/input.h> // per gli input report key e alloc
@@ -123,18 +124,18 @@ static void parser(const char* buf){
     /*fa traduce la stringa chiamata dal device negli input da tastiera*/
     int err = check_formato(buf);
     if(err){
-        printk("errore di formato");
+        pr_warn("errore di formato");
         return;
     }
-    u_int8_t stato = 0; //se è 0 siamo in attesa di trovvare una stringa in <>, se 1 siamo nel ciclo di pressione e rilascio
+    u_int8_t stato = 0; //se è 0 siamo in attesa di trovare una stringa in <>, se 1 siamo nel ciclo di pressione e rilascio
     int idx = 0;
     while(*buf != '\0'){
         if(*buf == '<'){
             stato = 1; //segnala che lo stato è in pressione
         }
         else if(*buf == '>' && stato == 1){
+            //ciclo di rilascio
             while(*(--buf) != '<'){
-                //rilascio di *buf
                 rilascia_tasto(*buf);
                 idx += 1;
             }
@@ -149,7 +150,7 @@ static void parser(const char* buf){
             premi_tasto(*buf);
         }
         else{
-            printk("funzione parser: attenzione ai caratteri esterni ");
+            pr_notice("presenza di caratteri esterni, rivedere regole di composizione macro");
             //in questo modo mandiamo avanti comunque la funzione, altrimenti avremmo un caso in cui si crea un loop
             //siamo in uno stato non corretto
         }
@@ -159,10 +160,11 @@ static void parser(const char* buf){
 
 static ssize_t device_write(struct file * file, const char __user * buffer, size_t len, loff_t * offset){
     /*funzione di scrittura per le fops*/
-    printk("chiamata funzione di write");    
     int ret = copy_from_user(&kchar, buffer, len); //kchar dichiarato fuori perche superava lo stack locale
     if(ret < 0) return -EFAULT;
 
+    kchar[len-1]='\0';//device_write prende in input una line feed dopo la stringa, viene eliminata
+    pr_info("tentativo di esecuzione macro %s, di lunghezza :%d", kchar, len-1); 
     parser(kchar);
     for(int i = 0; i < 1024; i++){
         kchar[i] = '\0';
@@ -173,12 +175,14 @@ static ssize_t device_write(struct file * file, const char __user * buffer, size
 
 static int my_init(void)
 {
-	printk("hello - Hello, Kernel!\n");
+	pr_info("Modulo per tastiera macro inserito\n");
 	
     //crezione di input device 
     dev = input_allocate_device();
-    if(!dev) printk("errore nell'inizializzazione");
-    
+    if(!dev) {
+        pr_err( "errore nell'inizializzazione");
+        return -1;
+    }    
     // inizializzazione
     dev->name = "tiziano_dev";
     dev->id.bustype = BUS_VIRTUAL;
@@ -193,7 +197,11 @@ static int my_init(void)
     //registrazione
     int error = input_register_device(dev);
     
-    if(error) printk("errore nella registrazione");
+    if(error) {
+        pr_err("errore nella registrazione");
+        input_free_device(dev);
+        return -1;
+    }
     
     /* 
     // creazione charachter device
@@ -208,32 +216,32 @@ static int my_init(void)
     //necessaria poichè il vecchio metodo era deprecato, lo lascio per completezza
     int res = alloc_chrdev_region(&d, 0, 1, "tiziano_chardev");
     if(res < 0){
-        printk("errore in alloc chardev region: %d\n", res);
+        pr_err("errore in alloc chardev region: %d\n", res);
         return -res;
     }
     major = MAJOR(d);
     cdev_init(&cdev, &fops);
     res = cdev_add(&cdev, MKDEV(major, 0), 1);
     if(res < 0){
-        printk("errore in cdev_add %d\n", res);
+        pr_err("errore in cdev_add %d\n", res);
         unregister_chrdev_region(d, 1);
         return -res;
     }
     chardev_class = class_create("tiziano_chardev");
     if(IS_ERR(chardev_class)){
-        printk("errore nella creazione della classe\n");	
+        pr_err("errore nella creazione della classe\n");	
         unregister_chrdev_region(d, 1);
         return -1;
     }
     void* ret;
     ret = device_create(chardev_class, NULL, MKDEV(major, 0), NULL, "tiziano_chardev0");
     if(IS_ERR(ret)){
-        printk("errore nella creazione del device\n");
+        pr_err("errore nella creazione del device\n");
         class_destroy(chardev_class);
         unregister_chrdev_region(d, 1);
         return -1;
     }
-    printk("device registrato con major %d\n", major);
+    pr_info("device registrato con major %d\n", major);
 
 
     return 0;
@@ -242,16 +250,16 @@ static int my_init(void)
 static void my_exit(void)
 {
     device_destroy(chardev_class, MKDEV(major, 0));
-    printk("device distrutta\n");
+    pr_info("device distrutta\n");
     //class_unregister(chardev_class);
     class_destroy(chardev_class);
-    printk("class distrutta\n");
+    pr_info("class distrutta\n");
 
     unregister_chrdev_region(d, 1);
-    printk("chardev region distrutta\n");
+    pr_info("chardev region distrutta\n");
     // la free non è necessaria se si fa unregister
     input_unregister_device(dev);
-    printk("hello - Goodbye, Kernel!\n");
+    pr_info("modulo macro deregistrato correttamente\n");
 }
 
 module_init(my_init);
